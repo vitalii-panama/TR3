@@ -35,23 +35,21 @@
 </style>
 
 <div class="featured-product-container">
-  </div>
-
-{% assign featured_product = all_products['my-awesome-featured-product'] %}
-
-{% if featured_product %}
-  <img
+  {% assign featured_product = all_products['my-awesome-featured-product'] %}
+  {% if featured_product %}
+    <img
     src="{{ featured_product.featured_image | image_url: width: 600 }}"
     alt="{{ featured_product.title }}"
     class="featured-product-image"
-  >
-  <h2 class="featured-product-title">{{ featured_product.title }}</h2>
-  <div class="featured-product-description">
-    {{ featured_product.description }}
-  </div>
-{% else %}
-  <p>Featured product not found. Please ensure the product handle is correct.</p>
-{% endif %}
+    >
+    <h2 class="featured-product-title">{{ featured_product.title }}</h2>
+    <div class="featured-product-description">
+      {{ featured_product.description }}
+    </div>
+  {% else %}
+    <p>Featured product not found. Please ensure the product handle is correct.</p>
+  {% endif %}
+</div>
 
 {% schema %}
 {

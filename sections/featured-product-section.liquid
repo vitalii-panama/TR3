@@ -1,0 +1,75 @@
+<style>
+  .featured-product-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    margin: 40px auto;
+    max-width: 900px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .featured-product-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+
+  .featured-product-title {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .featured-product-description {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: #555;
+    max-width: 700px;
+    margin-bottom: 20px;
+  }
+</style>
+
+<div class="featured-product-container">
+  </div>
+
+{% assign featured_product = all_products['my-awesome-featured-product'] %}
+
+{% if featured_product %}
+  <img
+    src="{{ featured_product.featured_image | image_url: width: 600 }}"
+    alt="{{ featured_product.title }}"
+    class="featured-product-image"
+  >
+  <h2 class="featured-product-title">{{ featured_product.title }}</h2>
+  <div class="featured-product-description">
+    {{ featured_product.description }}
+  </div>
+{% else %}
+  <p>Featured product not found. Please ensure the product handle is correct.</p>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Featured Product Section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "product_handle",
+      "label": "Product Handle",
+      "info": "Enter the handle of the product to feature (e.g., 'my-awesome-featured-product')",
+      "default": "my-awesome-featured-product"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured Product",
+      "category": "Custom Sections"
+    }
+  ]
+}
+{% endschema %}

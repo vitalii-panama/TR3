@@ -32,20 +32,289 @@
     max-width: 700px;
     margin-bottom: 20px;
   }
+
+  .featured-product-price {
+    font-size: 1.5em;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+
+  .product-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  label {
+    font-weight: bold;
+  }
+
+  .quantity-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+  }
+
+  .quantity-button {
+    width: 32px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0px;
+    background: white;
+    cursor: pointer;
+    font-size: 1em;
+    border-radius: 4px;
+  }
+
+  .quantity-input {
+    width: 80px;
+    height: 40px;
+    text-align: center;
+    font-size: 1em;
+    border: 0px;
+  }
+
+  button.add-to-cart {
+    padding: 12px 50px;
+    font-size: 1em;
+    color: black;
+    border: 1px solid black;
+    background-color: white;
+    cursor: pointer;
+    transition: background-color 0.5s ease;
+  }
+
+  button.add-to-cart:hover {
+    transition: background-color 0.5s ease;
+    background-color: #edf0f0;
+  }
+
+  .color-options {
+    display: flex;
+    gap: 12px;
+  }
+
+  .color-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    transition: border 0.2s ease;
+  }
+
+  input[type="radio"]:checked + label.color-circle {
+    border: 2px solid black;
+  }
+
+  .circle-display {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+
+  .color-circle.blue .circle-display { background-color: blue; }
+  .color-circle.red .circle-display { background-color: red; }
+  .color-circle.green .circle-display { background-color: green; }
+
+  .color-circle input[type="radio"]:checked + .circle-display {
+    border: 2px solid black;
+    box-sizing: border-box;
+  }
+
+  .size-options {
+    display: flex;
+    gap: 12px;
+  }
+
+  .size-button {
+    padding: 10px 20px;
+    border: 2px solid #ccc;
+    border-radius: 999px;
+    background-color: white;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.2s ease;
+  }
+
+  .size-button:hover {
+    border-color: #888;
+  }
+
+  .size-input {
+    display: none;
+  }
+
+  .size-input:checked + .size-button {
+    background-color: black;
+    color: white;
+    border-color: black;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 </style>
 
 <div class="featured-product-container">
   {% assign featured_product = all_products['my-awesome-featured-product'] %}
   {% if featured_product %}
+
     <img
-    src="{{ featured_product.featured_image | image_url: width: 600 }}"
-    alt="{{ featured_product.title }}"
-    class="featured-product-image"
+      src="{{ featured_product.featured_image | image_url: width: 600 }}"
+      alt="{{ featured_product.title }}"
+      class="featured-product-image"
     >
+
     <h2 class="featured-product-title">{{ featured_product.title }}</h2>
     <div class="featured-product-description">
       {{ featured_product.description }}
     </div>
+
+    <div class="featured-product-price" id="dynamic-price">€16.99</div>
+
+    <form method="post" action="/cart/add" class="product-form" id="variant-form">
+      <input type="hidden" name="id" id="variant-id" required>
+      
+      <!-- Color -->
+      <div class="form-group">
+        <label>Color:</label>
+        <div class="color-options">
+          {% assign colors = "Blue,Red,Green" | split: "," %}
+          {% for color in colors %}
+            <input type="radio" name="color" id="color-{{ color }}" value="{{ color }}" required hidden>
+            <label class="color-circle" for="color-{{ color }}" style="background-color: {{ color | downcase }};"></label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Size -->
+      <div class="form-group">
+        <label>Size:</label>
+        <div class="size-options">
+          {% assign sizes = "Small,Medium,Large" | split: "," %}
+          {% for size in sizes %}
+            <input type="radio" class="size-input" name="size" id="size-{{ size }}" value="{{ size }}" required>
+            <label for="size-{{ size }}" class="size-button">{{ size }}</label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- quantity -->
+      <div class="form-group">
+        <label for="quantity">Quantity</label>
+        <div class="quantity-selector">
+          <button type="button" class="quantity-button minus">-</button>
+          <input type="number" name="quantity" id="quantity" class="quantity-input" value="1" min="1" max="9" required>
+          <button type="button" class="quantity-button plus">+</button>
+        </div>
+      </div>
+
+      <button type="submit" class="add-to-cart" name="add" >Add to Cart</button>
+    </form>
+
+  <script>
+    const variants = {{ featured_product.variants | json }};
+    const form = document.getElementById('variant-form');
+    const variantInput = document.getElementById('variant-id');
+    const priceDisplay = document.getElementById('dynamic-price');
+    const quantityInput = document.getElementById('quantity');
+    const minusButton = document.querySelector('.quantity-button.minus');
+    const plusButton = document.querySelector('.quantity-button.plus');
+    const addToCartButton = form.querySelector('button[type="submit"]');
+
+    const prices = {
+      Small: "€16.99",
+      Medium: "€19.99",
+      Large: "€24.99"
+    };
+
+    // Quantity buttons
+    minusButton.addEventListener('click', () => {
+      let value = parseInt(quantityInput.value);
+      if (value > 1) {
+        quantityInput.value = value - 1;
+      }
+    });
+
+    plusButton.addEventListener('click', () => {
+      let value = parseInt(quantityInput.value);
+      if (value < 9) {
+        quantityInput.value = value + 1;
+      }
+    });
+
+    function updateVariantAndPrice() {
+      const selectedColor = form.querySelector('input[name="color"]:checked')?.value;
+      const selectedSize = form.querySelector('input[name="size"]:checked')?.value;
+
+      if (selectedSize && prices[selectedSize]) {
+        priceDisplay.textContent = prices[selectedSize];
+      }
+
+      if (selectedColor && selectedSize) {
+        const variant = variants.find(v =>
+          v.option1 === selectedColor && v.option2 === selectedSize
+        );
+        if (variant) {
+          variantInput.value = variant.id;
+        }
+      }
+    }
+
+    form.addEventListener('change', updateVariantAndPrice);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      addToCartButton.disabled = true;
+      try {
+        const formData = {
+          id: variantInput.value,
+          quantity: quantityInput.value
+        };
+
+        const response = await fetch('/cart/add.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        
+        if (data.status) {
+          alert('Error: ' + (data.description || 'Failed to add product to cart'));
+        } else {
+          window.location.href = '/cart';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('There was an error adding the product to your cart. Please try again.');
+      } finally {
+        addToCartButton.disabled = false; 
+      }
+    });
+  </script>
+
   {% else %}
     <p>Featured product not found. Please ensure the product handle is correct.</p>
   {% endif %}
